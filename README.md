@@ -1,0 +1,151 @@
+# bitfield
+
+A portable bit manipulation C library for safety-critical embedded systems.
+
+## Features
+
+- **Platform-independent** - Handles 8-bit vs 16-bit minimum word sizes
+- **No dynamic memory** - Fixed-size operations, no `malloc` / `free`
+- **Deterministic WCET** - All operations have bounded execution time
+- **MISRA C:2012 compliant** - Suitable for IEC 61508 environments
+- **Bit-level operations** - Individual bit access and bitfield manipulation
+- **Packing/unpacking** - Compact data representation for protocols
+- **CRC calculations** - Data integrity verification
+
+## Installation
+
+### Copy-in (recommended for embedded targets)
+
+Copy three files into your project tree:
+
+```
+include/bitfield.h
+src/bitfield.c
+```
+
+Then include the header:
+
+```c
+#include "bitfield.h"
+```
+
+### Meson subproject
+
+Add this repo as a wrap dependency or subproject:
+
+```meson
+bitfield_dep = dependency('bitfield', fallback : ['bitfield', 'bitfield_dep'])
+```
+
+## Quick Start
+
+```c
+#include <stdio.h>
+#include "bitfield.h"
+
+int main(void)
+{
+    bitfield_word_t reg = 0U;
+    
+    /* Set individual bits */
+    bitfield_set(&reg, 0U, true);  /* Set bit 0 */
+    bitfield_set(&reg, 3U, true);  /* Set bit 3 */
+    
+    /* Get bit value */
+    bool bit0 = bitfield_get(&reg, 0U);
+    
+    /* Set bit range */
+    bitfield_set_range(&reg, 4U, 7U, 0b1010U);
+    
+    /* Count set bits */
+    uint8_t count = bitfield_count_set(&reg, 8U);
+    
+    return 0;
+}
+```
+
+## Configuration
+
+All macros can be overridden before including the header:
+
+| Macro | Description | Default |
+|---|---|---|
+| `BITFIELD_MIN_WORD_SIZE` | Minimum word size in bits (8 or 16) | Auto-detected |
+
+## Input Validation
+
+All public APIs validate pointers and bit indices/ranges at the API boundary.
+
+- Passing a `NULL` pointer is safe; mutating functions become no-ops.
+- Out-of-range bit positions/ranges are ignored.
+- Value-returning functions return a safe default (`false` or `0U`) on invalid
+  input.
+
+## Building
+
+```sh
+# Library only (release)
+meson setup build --buildtype=release
+meson compile -C build
+
+# With unit tests
+meson setup build --buildtype=debug -Dbuild_tests=true
+meson compile -C build
+meson test -C build
+```
+
+## API Reference
+
+### Individual Bit Operations
+
+```c
+void bitfield_set(bitfield_word_t *data, uint8_t bit_pos, bool value);
+bool bitfield_get(const bitfield_word_t *data, uint8_t bit_pos);
+void bitfield_clear(bitfield_word_t *data, uint8_t bit_pos);
+```
+
+### Bitfield Range Operations
+
+```c
+void bitfield_set_range(bitfield_word_t *data, uint8_t start, uint8_t end, bitfield_accum_t value);
+bitfield_accum_t bitfield_get_range(const bitfield_word_t *data, uint8_t start, uint8_t end);
+```
+
+### Bit Counting
+
+```c
+uint8_t bitfield_count_set(const bitfield_word_t *data, uint8_t num_bits);
+uint8_t bitfield_count_unset(const bitfield_word_t *data, uint8_t num_bits);
+```
+
+### Packing/Unpacking
+
+```c
+void bitfield_pack(const uint8_t *src, uint8_t src_len, bitfield_word_t *dst, uint8_t dst_len);
+void bitfield_unpack(const bitfield_word_t *src, uint8_t src_len, uint8_t *dst, uint8_t dst_len);
+```
+
+### CRC Calculations
+
+```c
+uint16_t bitfield_crc16(const uint8_t *data, uint16_t length, uint16_t polynomial);
+```
+
+## Use Cases
+
+1. **Protocol Encoding** - Compact data for CAN, I2C, or custom protocols
+2. **Register Access** - Safe manipulation of peripheral registers
+3. **State Encoding** - Compact state representation in state machines
+4. **Data Compression** - Space-efficient storage for constrained systems
+5. **Bitmask Operations** - Event flag management and bitmask testing
+6. **Error Detection** - CRC for data integrity verification
+
+## Notes
+
+| Topic | Note |
+|---|---|
+| **Memory** | All operations use static memory; no dynamic allocation |
+| **Thread safety** | Not thread-safe; protect with external mutex if needed |
+| **WCET** | All operations have deterministic worst-case execution time |
+| **Platforms** | Auto-detects 8-bit vs 16-bit minimum word size |
+| **MISRA** | Compliant with MISRA C:2012 for safety-critical use |

@@ -195,7 +195,7 @@ bitfield_crc16(const uint8_t *data, uint16_t length, uint16_t polynomial)
                         if ((crc & 0x8000U) != 0U) {
                                 crc = (uint16_t)((crc << 1U) ^ polynomial);
                         } else {
-                                crc <<= 1U;
+                                crc = (uint16_t)(crc << 1U);
                         }
                 }
         }

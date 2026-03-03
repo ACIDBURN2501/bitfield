@@ -55,7 +55,8 @@ bitfield_set_range(bitfield_word_t *data, uint8_t start, uint8_t end,
         }
 
         width = (uint8_t)(end - start + 1U);
-        mask = (((bitfield_accum_t)1U << width) - 1U) << start;
+        mask = (((bitfield_accum_t)1U << width) - (bitfield_accum_t)1U)
+               << start;
 
         *data = (bitfield_word_t)((((bitfield_accum_t)*data) & (~mask))
                                   | ((value << start) & mask));
@@ -73,7 +74,8 @@ bitfield_get_range(const bitfield_word_t *data, uint8_t start, uint8_t end)
         }
 
         width = (uint8_t)(end - start + 1U);
-        mask = (((bitfield_accum_t)1U << width) - 1U) << start;
+        mask = (((bitfield_accum_t)1U << width) - (bitfield_accum_t)1U)
+               << start;
 
         return (bitfield_accum_t)((((bitfield_accum_t)*data) & mask) >> start);
 }
@@ -189,7 +191,7 @@ bitfield_crc16(const uint8_t *data, uint16_t length, uint16_t polynomial)
         }
 
         for (uint16_t i = 0U; i < length; i++) {
-                crc ^= (uint16_t)data[i] << 8U;
+                crc ^= (uint16_t)((uint16_t)data[i] << 8U);
 
                 for (uint8_t j = 0U; j < 8U; j++) {
                         if ((crc & 0x8000U) != 0U) {

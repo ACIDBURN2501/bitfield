@@ -30,6 +30,16 @@
 #endif
 #endif
 
+/* Validate BITFIELD_MIN_WORD_SIZE at compile time to prevent undefined
+ * behavior in shift operations. The current implementation supports 8-bit
+ * and 16-bit word sizes. Values > 16 require additional typedef cases and
+ * would cause undefined behavior in pack/unpack operations. This satisfies
+ * MISRA C:2012 Rule 12.2 and IEC-61508 requirements for deterministic
+ * behavior. */
+#if BITFIELD_MIN_WORD_SIZE > 16U
+#error "BITFIELD_MIN_WORD_SIZE must be 8 or 16 (current implementation limit)"
+#endif
+
 /** Word type matching platform minimum size */
 #if BITFIELD_MIN_WORD_SIZE == 16U
 /** 16-bit word type for platforms with 16-bit minimum */

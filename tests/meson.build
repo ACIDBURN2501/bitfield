@@ -30,3 +30,11 @@ test_exe_16 = executable(
 )
 
 test('bitfield tests (16-bit)', test_exe_16)
+
+# Compile-time validation test for BITFIELD_MIN_WORD_SIZE
+test(
+  'compile-time checks',
+  find_program('bash'),
+  args: [meson.current_source_dir() / 'test_compile_time_checks.sh'],
+  timeout: 30,
+)

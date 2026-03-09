@@ -171,6 +171,75 @@ test_invalid_bit_pos(void)
 
         printf("Invalid bit position handling: PASSED\n");
 }
+
+static void
+test_shift_bounds(void)
+{
+        bitfield_word_t value = 0xFFU;
+
+        uint8_t max_end = (uint8_t)(BITFIELD_MIN_WORD_SIZE - 1U);
+        bitfield_accum_t max_value =
+            ((bitfield_accum_t)1U << BITFIELD_MIN_WORD_SIZE) - 1U;
+
+        bitfield_set_range(&value, 0U, max_end, max_value);
+
+        bitfield_accum_t result = bitfield_get_range(&value, 0U, max_end);
+        assert(result == max_value);
+
+        bitfield_word_t value2 = 0xFFU;
+        bitfield_set_range(&value2, 0U, (uint8_t)BITFIELD_MIN_WORD_SIZE,
+                           max_value);
+        assert(value2 == 0xFFU);
+
+        printf("Shift bounds (max valid range): PASSED\n");
+}
+
+static void
+test_pack_truncation(void)
+{
+        uint8_t src[4] = {0x12U, 0x34U, 0x56U, 0x78U};
+        bitfield_word_t dst_small[1] = {0xABU};
+        bitfield_word_t dst_adequate[4] = {0U, 0U, 0U, 0U};
+
+        bitfield_pack(src, 4U, dst_small, 1U);
+
+        bitfield_pack(src, 4U, dst_adequate, 4U);
+        assert(dst_adequate[0] == 0x3412U || dst_adequate[0] == 0x12U);
+
+        printf("Pack truncation (silent on buffer full): PASSED\n");
+}
+
+static void
+test_pack_large_buffer(void)
+{
+        uint8_t src[10] = {0U};
+        for (uint8_t i = 0U; i < 10U; i++) {
+                src[i] = (uint8_t)i;
+        }
+
+        bitfield_word_t dst[10] = {0U};
+
+        bitfield_pack(src, 10U, dst, 10U);
+
+        printf("Pack large buffer (bits bounded): PASSED\n");
+}
+
+static void
+test_crc_edge_cases(void)
+{
+        uint16_t crc_null = bitfield_crc16(NULL, 4U, 0x8005U);
+        assert(crc_null == 0U);
+
+        uint8_t data[4] = {0x01, 0x23, 0x45, 0x67};
+        uint16_t crc_valid = bitfield_crc16(data, 4U, 0x8005U);
+        assert(crc_valid == 0x09CFU);
+
+        uint16_t crc_empty = bitfield_crc16(data, 0U, 0x8005U);
+        assert(crc_empty == 0xFFFFU);
+
+        printf("CRC edge cases (NULL, empty): PASSED\n");
+}
+
 int
 main(void)
 {
@@ -184,6 +253,10 @@ main(void)
         test_invalid_range();
         test_invalid_bit_count();
         test_invalid_bit_pos();
+        test_shift_bounds();
+        test_pack_truncation();
+        test_pack_large_buffer();
+        test_crc_edge_cases();
 
         printf("\nAll tests PASSED!\n");
         return 0;

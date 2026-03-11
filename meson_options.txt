@@ -1,2 +1,6 @@
-option('build_tests', type : 'boolean', value : false,
-    description : 'Build and run unit tests')
+option(
+  'build_tests',
+  type: 'boolean',
+  value: true,
+  description: 'Build and run unit tests',
+)

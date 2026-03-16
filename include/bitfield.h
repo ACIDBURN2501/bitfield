@@ -2,9 +2,15 @@
  * @brief Portable bit manipulation library for embedded systems
  *
  * This library provides deterministic bit manipulation operations
- * suitable for safety-critical applications. It handles platform
- * differences in minimum word size (8-bit vs 16-bit) while
- * maintaining MISRA C compliance and deterministic WCET.
+ * suitable for safety-critical applications. Two typed API families
+ * are provided: @c bitfield16_* for 16-bit fields and @c bitfield32_*
+ * for 32-bit fields covering the full range of word sizes encountered
+ * on 8/16/32-bit embedded targets and 64-bit hosts alike.
+ *
+ * No compile-time configuration is required. Both families are always
+ * available and may be mixed freely within the same translation unit,
+ * which is useful on platforms such as TI C2000 where 16-bit and 32-bit
+ * peripheral registers coexist in the same driver.
  */
 
 #ifndef BITFIELD_H
@@ -14,183 +20,229 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/** @defgroup platform Platform Detection
- * @brief Platform-specific configurations
+/** @defgroup bitfield16 16-bit Bitfield Operations
+ * @brief Operations on a single @c uint16_t field
  * @{
  */
 
-/** Minimum word size in bits for the target platform */
-#ifndef BITFIELD_MIN_WORD_SIZE
-#if defined(__TI_C2000__) || defined(__MSP430__)
-/** TI C2000 and MSP430 platforms have 16-bit minimum word size */
-#define BITFIELD_MIN_WORD_SIZE 16U
-#else
-/** Default to 8-bit minimum word size */
-#define BITFIELD_MIN_WORD_SIZE 8U
-#endif
-#endif
-
-/* Validate BITFIELD_MIN_WORD_SIZE at compile time to prevent undefined
- * behavior in shift operations. The current implementation supports 8-bit
- * and 16-bit word sizes. Values > 16 require additional typedef cases and
- * would cause undefined behavior in pack/unpack operations. This satisfies
- * MISRA C:2012 Rule 12.2 and IEC-61508 requirements for deterministic
- * behavior. */
-#if BITFIELD_MIN_WORD_SIZE > 16U
-#error "BITFIELD_MIN_WORD_SIZE must be 8 or 16 (current implementation limit)"
-#endif
-
-/** Word type matching platform minimum size */
-#if BITFIELD_MIN_WORD_SIZE == 16U
-/** 16-bit word type for platforms with 16-bit minimum */
-typedef uint16_t bitfield_word_t;
-#else
-/** 8-bit word type for platforms with 8-bit minimum */
-typedef uint8_t bitfield_word_t;
-#endif
-
-/** Accumulator type for operations (always 32-bit) */
-typedef uint32_t bitfield_accum_t;
-
-/** @} */
-
-/** @defgroup bit_operations Individual Bit Operations
- * @brief Functions for manipulating individual bits
- * @{
+/** Set a single bit in a 16-bit field to the specified value
+ *
+ * @param data    Pointer to the 16-bit field
+ * @param bit_pos Bit position (0 = LSB, 15 = MSB)
+ * @param value   Boolean value to set (true = 1, false = 0)
+ *
+ * If @p data is NULL or @p bit_pos >= 16, this function is a no-op.
  */
+void bitfield16_set(uint16_t *data, uint8_t bit_pos, bool value);
 
-/** Set a single bit to the specified value
+/** Get the value of a single bit in a 16-bit field
  *
- * @param data Pointer to the word containing the bit
- * @param bit_pos Bit position (0 = LSB)
- * @param value Boolean value to set (true = 1, false = 0)
- *
- * If @p data is NULL or @p bit_pos is out of range, this function is a no-op.
- */
-void bitfield_set(bitfield_word_t *data, uint8_t bit_pos, bool value);
-
-/** Get the value of a single bit
- *
- * @param data Pointer to the word containing the bit
- * @param bit_pos Bit position (0 = LSB)
+ * @param data    Pointer to the 16-bit field
+ * @param bit_pos Bit position (0 = LSB, 15 = MSB)
  * @return Boolean value of the bit (true = 1, false = 0)
  *
- * If @p data is NULL or @p bit_pos is out of range, this function returns
- * false.
+ * If @p data is NULL or @p bit_pos >= 16, this function returns false.
  */
-bool bitfield_get(const bitfield_word_t *data, uint8_t bit_pos);
+bool bitfield16_get(const uint16_t *data, uint8_t bit_pos);
 
-/** Clear a single bit (set to 0)
+/** Clear a single bit in a 16-bit field (set to 0)
  *
- * @param data Pointer to the word containing the bit
- * @param bit_pos Bit position (0 = LSB)
+ * @param data    Pointer to the 16-bit field
+ * @param bit_pos Bit position (0 = LSB, 15 = MSB)
  *
- * If @p data is NULL or @p bit_pos is out of range, this function is a no-op.
+ * If @p data is NULL or @p bit_pos >= 16, this function is a no-op.
  */
-void bitfield_clear(bitfield_word_t *data, uint8_t bit_pos);
+void bitfield16_clear(uint16_t *data, uint8_t bit_pos);
 
-/** @} */
-
-/** @defgroup bitfield_operations Bitfield Range Operations
- * @brief Functions for manipulating bit ranges
- * @{
- */
-
-/** Set a range of bits to the specified value
+/** Set a range of bits in a 16-bit field
  *
- * @param data Pointer to the word containing the bitfield
- * @param start Start bit position (0 = LSB)
- * @param end End bit position (inclusive)
- * @param value Value to set (LSB of value goes to start position)
+ * @param data  Pointer to the 16-bit field
+ * @param start Start bit position (0 = LSB, inclusive)
+ * @param end   End bit position (inclusive, must be < 16)
+ * @param value Value to write (LSB of value maps to @p start)
  *
- * If @p data is NULL, @p start > @p end, or @p end is out of range, this
+ * Bits outside the range [@p start, @p end] are preserved.
+ * If @p data is NULL, @p start > @p end, or @p end >= 16, this
  * function is a no-op.
  */
-void bitfield_set_range(bitfield_word_t *data, uint8_t start, uint8_t end,
-                        bitfield_accum_t value);
+void bitfield16_set_range(uint16_t *data, uint8_t start, uint8_t end,
+                          uint32_t value);
 
-/** Get a range of bits as a value
+/** Get a range of bits from a 16-bit field
  *
- * @param data Pointer to the word containing the bitfield
- * @param start Start bit position (0 = LSB)
- * @param end End bit position (inclusive)
- * @return Extracted bit range (LSB = start position)
+ * @param data  Pointer to the 16-bit field
+ * @param start Start bit position (0 = LSB, inclusive)
+ * @param end   End bit position (inclusive, must be < 16)
+ * @return Extracted bit range, right-aligned (bit @p start maps to bit 0)
  *
- * If @p data is NULL, @p start > @p end, or @p end is out of range, this
- * function returns 0.
+ * If @p data is NULL, @p start > @p end, or @p end >= 16, returns 0.
  */
-bitfield_accum_t bitfield_get_range(const bitfield_word_t *data, uint8_t start,
-                                    uint8_t end);
+uint32_t bitfield16_get_range(const uint16_t *data, uint8_t start, uint8_t end);
 
-/** @} */
-
-/** @defgroup bit_counting Bit Counting Operations
- * @brief Functions for counting bits
- * @{
- */
-
-/** Count the number of set bits (1s) in a bitfield
+/** Count the number of set bits (1s) in a 16-bit field
  *
- * @param data Pointer to the word containing the bitfield
- * @param num_bits Total number of bits to count
+ * @param data     Pointer to the 16-bit field
+ * @param num_bits Number of bits to examine, starting from LSB (max 16)
  * @return Number of set bits
  *
- * If @p data is NULL or @p num_bits is out of range, this function returns 0.
+ * If @p data is NULL or @p num_bits > 16, returns 0.
  */
-uint8_t bitfield_count_set(const bitfield_word_t *data, uint8_t num_bits);
+uint8_t bitfield16_count_set(const uint16_t *data, uint8_t num_bits);
 
-/** Count the number of unset bits (0s) in a bitfield
+/** Count the number of unset bits (0s) in a 16-bit field
  *
- * @param data Pointer to the word containing the bitfield
- * @param num_bits Total number of bits to count
+ * @param data     Pointer to the 16-bit field
+ * @param num_bits Number of bits to examine, starting from LSB (max 16)
  * @return Number of unset bits
  *
- * If @p data is NULL or @p num_bits is out of range, this function returns 0.
+ * If @p data is NULL or @p num_bits > 16, returns 0.
  */
-uint8_t bitfield_count_unset(const bitfield_word_t *data, uint8_t num_bits);
+uint8_t bitfield16_count_unset(const uint16_t *data, uint8_t num_bits);
 
-/** @} */
-
-/** @defgroup packing Packing/Unpacking Operations
- * @brief Functions for serializing/deserializing bitfields
- * @{
- */
-
-/** Pack byte array into compact bitfield representation
+/** Pack a byte array into an array of 16-bit words (little-endian)
  *
- * @param src Source byte array
+ * @param src     Source byte array
  * @param src_len Length of source array in bytes
- * @param dst Destination bitfield word array
+ * @param dst     Destination array of 16-bit words
  * @param dst_len Length of destination array in words
  *
- * If @p src or @p dst is NULL, this function is a no-op.
+ * Bytes are packed two at a time into each destination word, LSB first.
+ * If the destination fills before all source bytes are consumed, packing
+ * stops silently. If @p src or @p dst is NULL, this function is a no-op.
  */
-void bitfield_pack(const uint8_t *src, uint8_t src_len, bitfield_word_t *dst,
-                   uint8_t dst_len);
+void bitfield16_pack(const uint8_t *src, uint8_t src_len, uint16_t *dst,
+                     uint8_t dst_len);
 
-/** Unpack bitfield representation into byte array
+/** Unpack an array of 16-bit words into a byte array (little-endian)
  *
- * @param src Source bitfield word array
+ * @param src     Source array of 16-bit words
  * @param src_len Length of source array in words
- * @param dst Destination byte array
+ * @param dst     Destination byte array
  * @param dst_len Length of destination array in bytes
  *
  * If @p src or @p dst is NULL, this function is a no-op.
  */
-void bitfield_unpack(const bitfield_word_t *src, uint8_t src_len, uint8_t *dst,
+void bitfield16_unpack(const uint16_t *src, uint8_t src_len, uint8_t *dst,
+                       uint8_t dst_len);
+
+/** @} */
+
+/** @defgroup bitfield32 32-bit Bitfield Operations
+ * @brief Operations on a single @c uint32_t field
+ * @{
+ */
+
+/** Set a single bit in a 32-bit field to the specified value
+ *
+ * @param data    Pointer to the 32-bit field
+ * @param bit_pos Bit position (0 = LSB, 31 = MSB)
+ * @param value   Boolean value to set (true = 1, false = 0)
+ *
+ * If @p data is NULL or @p bit_pos >= 32, this function is a no-op.
+ */
+void bitfield32_set(uint32_t *data, uint8_t bit_pos, bool value);
+
+/** Get the value of a single bit in a 32-bit field
+ *
+ * @param data    Pointer to the 32-bit field
+ * @param bit_pos Bit position (0 = LSB, 31 = MSB)
+ * @return Boolean value of the bit (true = 1, false = 0)
+ *
+ * If @p data is NULL or @p bit_pos >= 32, this function returns false.
+ */
+bool bitfield32_get(const uint32_t *data, uint8_t bit_pos);
+
+/** Clear a single bit in a 32-bit field (set to 0)
+ *
+ * @param data    Pointer to the 32-bit field
+ * @param bit_pos Bit position (0 = LSB, 31 = MSB)
+ *
+ * If @p data is NULL or @p bit_pos >= 32, this function is a no-op.
+ */
+void bitfield32_clear(uint32_t *data, uint8_t bit_pos);
+
+/** Set a range of bits in a 32-bit field
+ *
+ * @param data  Pointer to the 32-bit field
+ * @param start Start bit position (0 = LSB, inclusive)
+ * @param end   End bit position (inclusive, must be < 32)
+ * @param value Value to write (LSB of value maps to @p start)
+ *
+ * Bits outside the range [@p start, @p end] are preserved.
+ * If @p data is NULL, @p start > @p end, or @p end >= 32, this
+ * function is a no-op.
+ */
+void bitfield32_set_range(uint32_t *data, uint8_t start, uint8_t end,
+                          uint32_t value);
+
+/** Get a range of bits from a 32-bit field
+ *
+ * @param data  Pointer to the 32-bit field
+ * @param start Start bit position (0 = LSB, inclusive)
+ * @param end   End bit position (inclusive, must be < 32)
+ * @return Extracted bit range, right-aligned (bit @p start maps to bit 0)
+ *
+ * If @p data is NULL, @p start > @p end, or @p end >= 32, returns 0.
+ */
+uint32_t bitfield32_get_range(const uint32_t *data, uint8_t start, uint8_t end);
+
+/** Count the number of set bits (1s) in a 32-bit field
+ *
+ * @param data     Pointer to the 32-bit field
+ * @param num_bits Number of bits to examine, starting from LSB (max 32)
+ * @return Number of set bits
+ *
+ * If @p data is NULL or @p num_bits > 32, returns 0.
+ */
+uint8_t bitfield32_count_set(const uint32_t *data, uint8_t num_bits);
+
+/** Count the number of unset bits (0s) in a 32-bit field
+ *
+ * @param data     Pointer to the 32-bit field
+ * @param num_bits Number of bits to examine, starting from LSB (max 32)
+ * @return Number of unset bits
+ *
+ * If @p data is NULL or @p num_bits > 32, returns 0.
+ */
+uint8_t bitfield32_count_unset(const uint32_t *data, uint8_t num_bits);
+
+/** Pack a byte array into an array of 32-bit words (little-endian)
+ *
+ * @param src     Source byte array
+ * @param src_len Length of source array in bytes
+ * @param dst     Destination array of 32-bit words
+ * @param dst_len Length of destination array in words
+ *
+ * Bytes are packed four at a time into each destination word, LSB first.
+ * If the destination fills before all source bytes are consumed, packing
+ * stops silently. If @p src or @p dst is NULL, this function is a no-op.
+ */
+void bitfield32_pack(const uint8_t *src, uint8_t src_len, uint32_t *dst,
                      uint8_t dst_len);
+
+/** Unpack an array of 32-bit words into a byte array (little-endian)
+ *
+ * @param src     Source array of 32-bit words
+ * @param src_len Length of source array in words
+ * @param dst     Destination byte array
+ * @param dst_len Length of destination array in bytes
+ *
+ * If @p src or @p dst is NULL, this function is a no-op.
+ */
+void bitfield32_unpack(const uint32_t *src, uint8_t src_len, uint8_t *dst,
+                       uint8_t dst_len);
 
 /** @} */
 
 /** @defgroup crc CRC Calculations
- * @brief Cyclic Redundancy Check functions
+ * @brief Cyclic Redundancy Check functions (field-width independent)
  * @{
  */
 
 /** Calculate 16-bit CRC using specified polynomial
  *
- * @param data Data to calculate CRC for
- * @param length Length of data in bytes
+ * @param data       Data to calculate CRC for
+ * @param length     Length of data in bytes
  * @param polynomial CRC polynomial (e.g., 0x8005 for CRC-16)
  * @return Calculated CRC value
  *

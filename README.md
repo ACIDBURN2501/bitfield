@@ -4,10 +4,11 @@ A portable bit manipulation C library for safety-critical embedded systems.
 
 ## Features
 
-- **Platform-independent** - Handles 8-bit vs 16-bit minimum word sizes
+- **Universal field widths** - Explicit `bitfield16_*` and `bitfield32_*` API families; both always available, no configuration required
 - **No dynamic memory** - Fixed-size operations, no `malloc` / `free`
 - **Deterministic WCET** - All operations have bounded execution time
-- **MISRA C:2012 compliant** - Suitable for IEC 61508 environments
+- **MISRA C:2012 aware** - Suitable for IEC 61508 environments
+- **Mixed-width friendly** - 16-bit and 32-bit families freely mixable in the same translation unit (e.g. TI C2000 drivers with both 16-bit control registers and 32-bit data registers)
 - **Bit-level operations** - Individual bit access and bitfield manipulation
 - **Packing/unpacking** - Compact data representation for protocols
 - **CRC calculations** - Data integrity verification
@@ -16,7 +17,7 @@ A portable bit manipulation C library for safety-critical embedded systems.
 
 ### Copy-in (recommended for embedded targets)
 
-Copy three files into your project tree:
+Copy two files into your project tree:
 
 ```
 include/bitfield.h
@@ -40,37 +41,80 @@ bitfield_dep = dependency('bitfield', fallback : ['bitfield', 'bitfield_dep'])
 ## Quick Start
 
 ```c
-#include <stdio.h>
 #include "bitfield.h"
 
 int main(void)
 {
-    bitfield_word_t reg = 0U;
-    
-    /* Set individual bits */
-    bitfield_set(&reg, 0U, true);  /* Set bit 0 */
-    bitfield_set(&reg, 3U, true);  /* Set bit 3 */
-    
-    /* Get bit value */
-    bool bit0 = bitfield_get(&reg, 0U);
-    
-    /* Set bit range */
-    bitfield_set_range(&reg, 4U, 7U, 0b1010U);
-    
-    /* Count set bits */
-    uint8_t count = bitfield_count_set(&reg, 8U);
-    
+    /* --- 16-bit field (e.g. a TI C2000 control register) --- */
+    uint16_t ctrl = 0U;
+
+    bitfield16_set(&ctrl, 4U, true);              /* set enable bit */
+    bitfield16_set_range(&ctrl, 0U, 1U, 0b10U);   /* mode = 2 */
+    bool enabled = bitfield16_get(&ctrl, 4U);
+    uint32_t mode = bitfield16_get_range(&ctrl, 0U, 1U);
+
+    /* --- 32-bit field (e.g. a peripheral period register) --- */
+    uint32_t period = 0U;
+
+    bitfield32_set_range(&period, 0U, 31U, 100000U);
+    uint32_t val = bitfield32_get_range(&period, 0U, 31U);
+
+    /* --- Count bits --- */
+    uint8_t n = bitfield32_count_set(&period, 32U);
+
+    /* --- Pack bytes into 32-bit words for a protocol frame --- */
+    uint8_t payload[4] = {0x11U, 0x22U, 0x33U, 0x44U};
+    uint32_t frame[1] = {0U};
+    bitfield32_pack(payload, 4U, frame, 1U);  /* frame[0] == 0x44332211 */
+
     return 0;
 }
 ```
 
-## Configuration
+## API Reference
 
-All macros can be overridden before including the header:
+Both families share identical semantics; only the field type and valid bit
+position range differ.
 
-| Macro | Description | Default |
-|---|---|---|
-| `BITFIELD_MIN_WORD_SIZE` | Minimum word size in bits (8 or 16) | Auto-detected |
+### 16-bit family (`uint16_t` fields, bit positions 0–15)
+
+```c
+void     bitfield16_set(uint16_t *data, uint8_t bit_pos, bool value);
+bool     bitfield16_get(const uint16_t *data, uint8_t bit_pos);
+void     bitfield16_clear(uint16_t *data, uint8_t bit_pos);
+
+void     bitfield16_set_range(uint16_t *data, uint8_t start, uint8_t end, uint32_t value);
+uint32_t bitfield16_get_range(const uint16_t *data, uint8_t start, uint8_t end);
+
+uint8_t  bitfield16_count_set(const uint16_t *data, uint8_t num_bits);
+uint8_t  bitfield16_count_unset(const uint16_t *data, uint8_t num_bits);
+
+void     bitfield16_pack(const uint8_t *src, uint8_t src_len, uint16_t *dst, uint8_t dst_len);
+void     bitfield16_unpack(const uint16_t *src, uint8_t src_len, uint8_t *dst, uint8_t dst_len);
+```
+
+### 32-bit family (`uint32_t` fields, bit positions 0–31)
+
+```c
+void     bitfield32_set(uint32_t *data, uint8_t bit_pos, bool value);
+bool     bitfield32_get(const uint32_t *data, uint8_t bit_pos);
+void     bitfield32_clear(uint32_t *data, uint8_t bit_pos);
+
+void     bitfield32_set_range(uint32_t *data, uint8_t start, uint8_t end, uint32_t value);
+uint32_t bitfield32_get_range(const uint32_t *data, uint8_t start, uint8_t end);
+
+uint8_t  bitfield32_count_set(const uint32_t *data, uint8_t num_bits);
+uint8_t  bitfield32_count_unset(const uint32_t *data, uint8_t num_bits);
+
+void     bitfield32_pack(const uint8_t *src, uint8_t src_len, uint32_t *dst, uint8_t dst_len);
+void     bitfield32_unpack(const uint32_t *src, uint8_t src_len, uint8_t *dst, uint8_t dst_len);
+```
+
+### CRC (field-width independent)
+
+```c
+uint16_t bitfield_crc16(const uint8_t *data, uint16_t length, uint16_t polynomial);
+```
 
 ## Input Validation
 
@@ -78,8 +122,7 @@ All public APIs validate pointers and bit indices/ranges at the API boundary.
 
 - Passing a `NULL` pointer is safe; mutating functions become no-ops.
 - Out-of-range bit positions/ranges are ignored.
-- Value-returning functions return a safe default (`false` or `0U`) on invalid
-  input.
+- Value-returning functions return a safe default (`false` or `0U`) on invalid input.
 
 ## Building
 
@@ -94,47 +137,10 @@ meson compile -C build
 meson test -C build
 ```
 
-## API Reference
-
-### Individual Bit Operations
-
-```c
-void bitfield_set(bitfield_word_t *data, uint8_t bit_pos, bool value);
-bool bitfield_get(const bitfield_word_t *data, uint8_t bit_pos);
-void bitfield_clear(bitfield_word_t *data, uint8_t bit_pos);
-```
-
-### Bitfield Range Operations
-
-```c
-void bitfield_set_range(bitfield_word_t *data, uint8_t start, uint8_t end, bitfield_accum_t value);
-bitfield_accum_t bitfield_get_range(const bitfield_word_t *data, uint8_t start, uint8_t end);
-```
-
-### Bit Counting
-
-```c
-uint8_t bitfield_count_set(const bitfield_word_t *data, uint8_t num_bits);
-uint8_t bitfield_count_unset(const bitfield_word_t *data, uint8_t num_bits);
-```
-
-### Packing/Unpacking
-
-```c
-void bitfield_pack(const uint8_t *src, uint8_t src_len, bitfield_word_t *dst, uint8_t dst_len);
-void bitfield_unpack(const bitfield_word_t *src, uint8_t src_len, uint8_t *dst, uint8_t dst_len);
-```
-
-### CRC Calculations
-
-```c
-uint16_t bitfield_crc16(const uint8_t *data, uint16_t length, uint16_t polynomial);
-```
-
 ## Use Cases
 
 1. **Protocol Encoding** - Compact data for CAN, I2C, or custom protocols
-2. **Register Access** - Safe manipulation of peripheral registers
+2. **Register Access** - Safe manipulation of peripheral registers on any word-width target
 3. **State Encoding** - Compact state representation in state machines
 4. **Data Compression** - Space-efficient storage for constrained systems
 5. **Bitmask Operations** - Event flag management and bitmask testing
@@ -147,6 +153,6 @@ uint16_t bitfield_crc16(const uint8_t *data, uint16_t length, uint16_t polynomia
 | **Memory** | All operations use static memory; no dynamic allocation |
 | **Thread safety** | Not thread-safe; protect with external mutex if needed |
 | **WCET** | All operations have deterministic worst-case execution time |
-| **Platforms** | Auto-detects 8-bit vs 16-bit minimum word size |
+| **Platforms** | No platform detection or configuration required; `uint16_t` and `uint32_t` are available on all C99 targets including TI C2000 |
 | **MISRA** | Compliant with MISRA C:2012 for safety-critical use |
 | **Version Header** | The module version header is auto-generated by the Meson build and placed in the output build folder |

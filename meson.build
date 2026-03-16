@@ -1,7 +1,7 @@
 project(
   'bitfield',
   'c',
-  version: '1.1.3',
+  version: '1.3.3',
   default_options: ['c_std=c11', 'warning_level=2'],
   license: 'MIT',
 )

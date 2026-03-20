@@ -10,7 +10,7 @@
 
 #include "bitfield.h"
 
-/* ── 16-bit: individual bit operations ─────────────────────────────────────*/
+/* ── 16-bit: individual bit operations ─────────────────────────────────── */
 
 static void
 test_bit_operations_16(void)
@@ -46,7 +46,7 @@ test_bit_operations_16(void)
         printf("Bit operations (16-bit): PASSED\n");
 }
 
-/* ── 32-bit: individual bit operations ─────────────────────────────────────*/
+/* ── 32-bit: individual bit operations ─────────────────────────────────── */
 
 static void
 test_bit_operations_32(void)
@@ -82,7 +82,7 @@ test_bit_operations_32(void)
         printf("Bit operations (32-bit): PASSED\n");
 }
 
-/* ── 16-bit: range operations ───────────────────────────────────────────────*/
+/* ── 16-bit: range operations ──────────────────────────────────────────── */
 
 static void
 test_bitfield_range_16(void)
@@ -116,7 +116,7 @@ test_bitfield_range_16(void)
         printf("Range operations (16-bit): PASSED\n");
 }
 
-/* ── 32-bit: range operations ───────────────────────────────────────────────*/
+/* ── 32-bit: range operations ──────────────────────────────────────────── */
 
 static void
 test_bitfield_range_32(void)
@@ -150,7 +150,7 @@ test_bitfield_range_32(void)
         printf("Range operations (32-bit): PASSED\n");
 }
 
-/* ── 16-bit: bit counting ───────────────────────────────────────────────────*/
+/* ── 16-bit: bit counting ──────────────────────────────────────────────── */
 
 static void
 test_bit_counting_16(void)
@@ -169,7 +169,8 @@ test_bit_counting_16(void)
         assert(bitfield16_count_set(&value, 16U) == 0U);
         assert(bitfield16_count_unset(&value, 16U) == 16U);
 
-        /* Partial count — only examine lower 8 bits of 0xAAAA (= 0xAA = 4 set) */
+        /* Partial count — only examine lower 8 bits of 0xAAAA (= 0xAA = 4 set)
+         */
         value = 0xAAAAU;
         assert(bitfield16_count_set(&value, 8U) == 4U);
         assert(bitfield16_count_unset(&value, 8U) == 4U);
@@ -177,7 +178,7 @@ test_bit_counting_16(void)
         printf("Bit counting (16-bit): PASSED\n");
 }
 
-/* ── 32-bit: bit counting ───────────────────────────────────────────────────*/
+/* ── 32-bit: bit counting ──────────────────────────────────────────────── */
 
 static void
 test_bit_counting_32(void)
@@ -240,7 +241,7 @@ test_packing_16(void)
         printf("Pack/unpack (16-bit): PASSED\n");
 }
 
-/* ── 32-bit: pack / unpack ──────────────────────────────────────────────────*/
+/* ── 32-bit: pack / unpack ─────────────────────────────────────────────── */
 
 static void
 test_packing_32(void)
@@ -281,7 +282,7 @@ test_packing_32(void)
         printf("Pack/unpack (32-bit): PASSED\n");
 }
 
-/* ── NULL pointer safety ────────────────────────────────────────────────────*/
+/* ── NULL pointer safety ───────────────────────────────────────────────── */
 
 static void
 test_null_pointer(void)
@@ -319,7 +320,7 @@ test_null_pointer(void)
         printf("Null-pointer handling: PASSED\n");
 }
 
-/* ── 16-bit: invalid range / bit-count / bit-position ──────────────────────*/
+/* ── 16-bit: invalid range / bit-count / bit-position ──────────────────── */
 
 static void
 test_invalid_inputs_16(void)
@@ -351,7 +352,7 @@ test_invalid_inputs_16(void)
         printf("Invalid inputs (16-bit): PASSED\n");
 }
 
-/* ── 32-bit: invalid range / bit-count / bit-position ──────────────────────*/
+/* ── 32-bit: invalid range / bit-count / bit-position ──────────────────── */
 
 static void
 test_invalid_inputs_32(void)
@@ -383,7 +384,7 @@ test_invalid_inputs_32(void)
         printf("Invalid inputs (32-bit): PASSED\n");
 }
 
-/* ── 16-bit: boundary / shift-bounds ───────────────────────────────────────*/
+/* ── 16-bit: boundary / shift-bounds ───────────────────────────────────── */
 
 static void
 test_shift_bounds_16(void)
@@ -409,7 +410,7 @@ test_shift_bounds_16(void)
         printf("Shift bounds (16-bit): PASSED\n");
 }
 
-/* ── 32-bit: boundary / shift-bounds ───────────────────────────────────────*/
+/* ── 32-bit: boundary / shift-bounds ───────────────────────────────────── */
 
 static void
 test_shift_bounds_32(void)
@@ -435,7 +436,7 @@ test_shift_bounds_32(void)
         printf("Shift bounds (32-bit): PASSED\n");
 }
 
-/* ── 16-bit: pack truncation ────────────────────────────────────────────────*/
+/* ── 16-bit: pack truncation ───────────────────────────────────────────── */
 
 static void
 test_pack_truncation_16(void)
@@ -456,7 +457,7 @@ test_pack_truncation_16(void)
         printf("Pack truncation (16-bit): PASSED\n");
 }
 
-/* ── 32-bit: pack truncation ────────────────────────────────────────────────*/
+/* ── 32-bit: pack truncation ───────────────────────────────────────────── */
 
 static void
 test_pack_truncation_32(void)
@@ -478,7 +479,7 @@ test_pack_truncation_32(void)
         printf("Pack truncation (32-bit): PASSED\n");
 }
 
-/* ── Large buffer pack (both families) ──────────────────────────────────────*/
+/* ── Large buffer pack (both families) ─────────────────────────────────── */
 
 static void
 test_pack_large_buffer(void)
@@ -497,7 +498,7 @@ test_pack_large_buffer(void)
         printf("Pack large buffer: PASSED\n");
 }
 
-/* ── Mixed-width usage (simulates C2000 driver style) ───────────────────────*/
+/* ── Mixed-width usage (simulates C2000 driver style) ──────────────────── */
 
 static void
 test_mixed_width_usage(void)
@@ -509,8 +510,8 @@ test_mixed_width_usage(void)
         uint32_t period_reg = 0U;
 
         /* Set mode bits in 16-bit control register */
-        bitfield16_set_range(&ctrl_reg, 0U, 1U, 0b10U);  /* mode = 2 */
-        bitfield16_set(&ctrl_reg, 4U, true);               /* enable bit */
+        bitfield16_set_range(&ctrl_reg, 0U, 1U, 0b10U); /* mode = 2 */
+        bitfield16_set(&ctrl_reg, 4U, true);            /* enable bit */
         assert(bitfield16_get_range(&ctrl_reg, 0U, 1U) == 0b10U);
         assert(bitfield16_get(&ctrl_reg, 4U) == true);
 
@@ -525,7 +526,7 @@ test_mixed_width_usage(void)
         printf("Mixed-width usage: PASSED\n");
 }
 
-/* ── CRC ─────────────────────────────────────────────────────────────────── */
+/* ── CRC ───────────────────────────────────────────────────────────────── */
 
 static void
 test_crc(void)
@@ -550,7 +551,123 @@ test_crc_edge_cases(void)
         printf("CRC edge cases: PASSED\n");
 }
 
-/* ── main ────────────────────────────────────────────────────────────────── */
+/* ── CRC with different polynomials and edge data ───────────────────────── */
+
+static void
+test_crc_variations(void)
+{
+        /* Test with multiple CRC-16 polynomials */
+        uint8_t data[2] = {0x55U, 0xAAU};
+
+        /* CRC-16-CCITT (polynomial 0x1021) */
+        uint16_t crc1 = bitfield_crc16(data, 2U, 0x1021U);
+        assert(crc1 != 0xFFFFU);
+
+        /* CRC-16-IBM (polynomial 0x8005) */
+        uint16_t crc2 = bitfield_crc16(data, 2U, 0x8005U);
+        assert(crc2 != 0xFFFFU);
+
+        /* NULL data returns 0 */
+        assert(bitfield_crc16(NULL, 0U, 0x8005U) == 0U);
+        /* Empty data returns polynomial (0xFFFF) */
+        assert(bitfield_crc16(data, 0U, 0x8005U) == 0xFFFFU);
+
+        /* Single byte */
+        uint8_t single[1] = {0x42U};
+        assert(bitfield_crc16(single, 1U, 0x8005U) != 0xFFFFU);
+
+        printf("CRC variations: PASSED\n");
+}
+
+/* ── 16-bit: range operations with overlapping/adjacent ranges ─────────── */
+
+static void
+test_range_overlap_16(void)
+{
+        uint16_t value = 0x1234U;
+
+        /* Set range bits 4-7 to 0xF */
+        bitfield16_set_range(&value, 4U, 7U, 0xFU);
+        assert(value == 0x12F4U);
+
+        /* Set adjacent range: bits 0-3 to 0xF */
+        bitfield16_set_range(&value, 0U, 3U, 0x0FU);
+        assert(value == 0x12FFU);
+
+        /* Get partial overlap: bits 2-5 */
+        uint32_t partial = bitfield16_get_range(&value, 2U, 5U);
+        assert(partial == 0b1111U);
+
+        printf("Range overlap (16-bit): PASSED\n");
+}
+
+/* ── Pack/unpack with misaligned byte counts ───────────────────────────── */
+
+static void
+test_pack_unpack_misaligned_16(void)
+{
+        /* Odd number of bytes (3) into 2-word destination */
+        uint8_t src[3] = {0x11U, 0x22U, 0x33U};
+        uint16_t dst[2] = {0U, 0U};
+        bitfield16_pack(src, 3U, dst, 2U);
+        assert(dst[0] == 0x2211U);
+        assert(dst[1] == 0x0033U); /* Last byte zero-extended */
+
+        /* Verify round-trip with odd bytes */
+        uint8_t out[3] = {0U};
+        bitfield16_unpack(dst, 2U, out, 3U);
+        assert(out[0] == 0x11U);
+        assert(out[1] == 0x22U);
+        assert(out[2] == 0x33U);
+
+        printf("Pack/unpack misaligned (16-bit): PASSED\n");
+}
+
+/* ── Count operations on partial ranges with specific bit patterns ─────── */
+
+static void
+test_count_partial_patterns_16(void)
+{
+        uint16_t value = 0x5555U; /* 0101010101010101 */
+
+        /* Count from bit 2 to 5 (4 bits: 0101 = 2 set, 2 unset) */
+        assert(bitfield16_count_set(&value, 4U) == 2U);
+        assert(bitfield16_count_unset(&value, 4U) == 2U);
+
+        /* Count from bit 12 to 15 (4 bits: 0101 = 2 set, 2 unset) */
+        assert(bitfield16_count_set(&value, 4U) == 2U);
+
+        /* Count from bit 1 (skips bit 0 which is 1) */
+        assert(bitfield16_count_set(&value, 15U) == 8U);
+        assert(bitfield16_count_unset(&value, 15U) == 7U);
+
+        printf("Count partial patterns (16-bit): PASSED\n");
+}
+
+/* ── 32-bit range operations with multi-word values
+ * ──────────────────────────*/
+
+static void
+test_range_32_multiword(void)
+{
+        uint32_t value = 0x00000000U;
+
+        /* Set upper 16 bits */
+        bitfield32_set_range(&value, 16U, 31U, 0xABCDU);
+        assert(value == 0xABCD0000U);
+
+        /* Set lower 16 bits */
+        bitfield32_set_range(&value, 0U, 15U, 0xEF01U);
+        assert(value == 0xABCDEF01U);
+
+        /* Get 24-bit range (spans bit boundaries) */
+        uint32_t range24 = bitfield32_get_range(&value, 4U, 27U);
+        assert(range24 == 0x00BCDEF0U);
+
+        printf("Range 32-bit multiword: PASSED\n");
+}
+
+/* ── main ──────────────────────────────────────────────────────────────── */
 
 int
 main(void)
@@ -574,6 +691,11 @@ main(void)
         test_mixed_width_usage();
         test_crc();
         test_crc_edge_cases();
+        test_crc_variations();
+        test_range_overlap_16();
+        test_pack_unpack_misaligned_16();
+        test_count_partial_patterns_16();
+        test_range_32_multiword();
 
         printf("\nAll tests PASSED!\n");
         return 0;

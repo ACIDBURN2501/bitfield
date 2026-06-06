@@ -2,7 +2,7 @@ project(
   'bitfield',
   'c',
   version: '1.3.3',
-  default_options: ['c_std=c11', 'warning_level=2'],
+  default_options: ['c_std=c11', 'warning_level=3'],
   license: 'MIT',
 )
 
@@ -48,6 +48,16 @@ bitfield_dep = declare_dependency(link_with: library, include_directories: publi
 meson.override_dependency('bitfield', bitfield_dep)
 
 install_headers('include/bitfield.h', subdir: 'bitfield')
+
+# ── pkg-config ─────────────────────────────────────────────────────────────────
+
+pkgconfig = import('pkgconfig')
+pkgconfig.generate(
+  library,
+  name: 'bitfield',
+  description: 'Portable bit manipulation library for safety-critical embedded systems',
+  subdirs: 'bitfield',
+)
 
 # ── Host unit tests ────────────────────────────────────────────────────────────
 

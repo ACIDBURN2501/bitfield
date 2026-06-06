@@ -1,0 +1,23 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [Unreleased]
+
+### Changed
+
+- Standardised CI, security policy, contributor guidance, SPDX headers, pkg-config generation, and coverage thresholds with the primitive family baseline.
+
+## [1.3.3] - 2026-03-16
+
+### Changed
+
+- Improved support for separate 16-bit and 32-bit bitfield API families while preserving portability across embedded targets with different native word sizes.
+
+## [1.1.3] - 2026-03-11
+
+### Changed
+
+- Moved build configuration templates into `config/`, enabled automatic unit-test builds, and cleaned up Meson build formatting.

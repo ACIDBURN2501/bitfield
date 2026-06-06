@@ -1,5 +1,7 @@
 # bitfield
 
+[![CI](https://github.com/aajll/bitfield/actions/workflows/ci.yml/badge.svg)](https://github.com/aajll/bitfield/actions/workflows/ci.yml)
+
 A portable bit manipulation C library for safety-critical embedded systems.
 
 ## Features

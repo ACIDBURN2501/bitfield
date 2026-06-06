@@ -1,5 +1,10 @@
-/** @file bitfield.h
- * @brief Portable bit manipulation library for embedded systems
+/**
+ * SPDX-License-Identifier: MIT
+ *
+ * @file: bitfield.h
+ *
+ * @brief
+ *    Portable bit manipulation library for embedded systems.
  *
  * This library provides deterministic bit manipulation operations
  * suitable for safety-critical applications. Two typed API families

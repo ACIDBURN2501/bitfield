@@ -1,5 +1,10 @@
-/** @file bitfield.c
- * @brief Implementation of portable bit manipulation library
+/**
+ * SPDX-License-Identifier: MIT
+ *
+ * @file: bitfield.c
+ *
+ * @brief
+ *    Implementation of portable bit manipulation library.
  */
 
 #include "bitfield.h"

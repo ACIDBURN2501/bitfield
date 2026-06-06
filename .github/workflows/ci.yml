@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Build the library and run the full test suite under ASan + UBSan.
+  # Runs on both Linux and macOS to catch platform-specific issues.
+  # ---------------------------------------------------------------------------
+  test:
+    name: "Test (${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install ninja (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -q && sudo apt-get install -y ninja-build
+
+      - name: Install ninja (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja
+
+      - name: Install meson
+        run: pip install meson
+
+      - name: Configure (debug + sanitizers)
+        run: >
+          meson setup build
+          --buildtype=debug
+          -Dbuild_tests=true
+          -Db_sanitize=address,undefined
+
+      - name: Build
+        run: meson compile -C build
+
+      - name: Test
+        run: meson test -C build --verbose
+
+      - name: Upload test log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testlog-${{ matrix.os }}
+          path: build/meson-logs/testlog.txt
+
+  # ---------------------------------------------------------------------------
+  # Verify the library compiles cleanly in release mode (no tests, no
+  # sanitizers) - the configuration a downstream project would use.
+  # ---------------------------------------------------------------------------
+  release-build:
+    name: "Release build"
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install ninja
+        run: sudo apt-get update -q && sudo apt-get install -y ninja-build
+
+      - name: Install meson
+        run: pip install meson
+
+      - name: Configure (release)
+        run: >
+          meson setup build
+          --buildtype=release
+          -Dbuild_tests=false
+
+      - name: Build
+        run: meson compile -C build
+
+  # ---------------------------------------------------------------------------
+  # Code coverage gate. Builds with gcov instrumentation, runs the full
+  # test suite, and fails the job if line or branch coverage drops below
+  # the threshold.
+  # ---------------------------------------------------------------------------
+  coverage:
+    name: "Coverage gate"
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install ninja
+        run: sudo apt-get update -q && sudo apt-get install -y ninja-build
+
+      - name: Install meson and gcovr
+        run: pip install meson gcovr
+
+      - name: Configure (coverage)
+        run: >
+          meson setup build
+          --buildtype=debug
+          -Dbuild_tests=true
+          -Db_coverage=true
+
+      - name: Build
+        run: meson compile -C build
+
+      - name: Run tests
+        run: meson test -C build --verbose
+
+      - name: Generate coverage report
+        run: |
+          mkdir -p coverage-report
+          gcovr \
+            --root . \
+            --filter 'src/' \
+            --filter 'include/' \
+            --html-details coverage-report/index.html \
+            --txt coverage-report/summary.txt \
+            --print-summary \
+            --fail-under-line 80 \
+            --fail-under-branch 70
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage-report/

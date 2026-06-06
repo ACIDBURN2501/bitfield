@@ -1,5 +1,10 @@
-/** @file bitfield_version.h
- * @brief Auto-generated version information.  Do not edit by hand.
+/**
+ * SPDX-License-Identifier: MIT
+ *
+ * @file: bitfield_version.h
+ *
+ * @brief
+ *    Auto-generated version information. Do not edit by hand.
  */
 
 #ifndef BITFIELD_VERSION_H
